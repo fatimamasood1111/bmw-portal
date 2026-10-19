@@ -218,10 +218,10 @@
   }
 
   /* ---------- style studio: two-colour palettes (beige + one deep accent) ---------- */
-  const STYLE_KEY = "agmc_style_v6", DEF = { sand: "#e9e3d6", accent: "#111111", mode: "light", radius: "soft", font: "luxe", shade: 100, heroChat: "on" };
+  const STYLE_KEY = "agmc_style_v7", DEF = { sand: "#ffffff", accent: "#000000", mode: "light", radius: "soft", font: "luxe", shade: 100, heroChat: "off" };
   let S = { ...DEF, ...(safe(() => JSON.parse(localStorage.getItem(STYLE_KEY)), {}) || {}) };
   const PALETTES = [   // [name, colour 1 = beige base, colour 2 = deep accent]
-    ["Sand & Ink", "#e9e3d6", "#111111"], ["Sand & Navy", "#e6dac4", "#1a2b4c"], ["Sand & Burgundy", "#e8dccb", "#6d1a2c"], ["Sand & Espresso", "#e4d6c0", "#3b2a20"],
+    ["Black & White", "#ffffff", "#000000"], ["Sand & Ink", "#e9e3d6", "#111111"], ["Sand & Navy", "#e6dac4", "#1a2b4c"], ["Sand & Burgundy", "#e8dccb", "#6d1a2c"], ["Sand & Espresso", "#e4d6c0", "#3b2a20"],
     ["Cream & Cobalt", "#efe6d2", "#1d3fae"], ["Sand & Terracotta", "#eadcc6", "#b4492d"], ["Stone & Charcoal", "#e3ddd2", "#1f2024"],
   ];
   const OPTS = { spHeroChat: ["heroChat", [["on", "Show"], ["off", "Hide"]]], spMode: ["mode", [["light", "Light"], ["dark", "Dark"]]], spRadius: ["radius", [["sharp", "Sharp"], ["soft", "Soft"], ["round", "Round"]]], spFont: ["font", [["luxe", "Luxe"], ["modern", "Modern"], ["editorial", "Editorial"]]] };
@@ -241,7 +241,7 @@
     r.style.setProperty("--hi-ink", /^#/.test(hex) && lum(hex) > 0.6 ? "#0a0d14" : "#ffffff");
   }
   function applyStyle() {
-    const r = document.documentElement; paint(); r.dataset.mode = S.mode; r.dataset.radius = S.radius; r.dataset.font = S.font; r.dataset.herochat = S.heroChat || "on";
+    const r = document.documentElement; paint(); r.dataset.mode = S.mode; r.dataset.radius = S.radius; r.dataset.font = S.font; r.dataset.herochat = S.heroChat || "on"; r.dataset.pal = S.sand.toLowerCase() === "#ffffff" && S.accent.toLowerCase() === "#000000" ? "mono" : "";
     if ($("#spShade")) $("#spShade").value = S.shade ?? 100; { const dl = $("#spPhotoDl"), saved = safe(() => localStorage.getItem("agmc_hero_photo"), null); if (dl && saved) { dl.href = saved; dl.hidden = false; } }
     if (!$("#spPal")) return;
     $("#spPal").innerHTML = PALETTES.map(([n, a, b]) => `<button class="pal ${a.toLowerCase() === S.sand.toLowerCase() && b.toLowerCase() === S.accent.toLowerCase() ? "on" : ""}" data-pa="${a}" data-ph="${b}" title="${n}"><span style="background:${a}"></span><span style="background:${b}"></span><em>${n}</em></button>`).join("");
