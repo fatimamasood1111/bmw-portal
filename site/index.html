@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGMC — Pre-owned cars, found by AI</title>
+<meta name="description" content="Describe the car you need and Wazir, our AI advisor, finds, explains and books it.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%23111111%27/%3E%3Cpath d=%27M16 5l2.2 7.2L25.5 14l-7.3 1.8L16 23l-2.2-7.2L6.5 14l7.3-1.8z%27 fill=%27%23e9e3d6%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="home">
+<main id="top">
+
+  <!-- ===== cinematic hero ===== -->
+  <section class="lux-hero">
+    <div class="lux-bg" id="luxBg" aria-hidden="true"></div>
+    <div class="lux-shade" aria-hidden="true"></div>
+    <div class="wrap lux-in">
+      <div class="lux-row">
+        <div class="lux-copy">
+          <h1 class="lux-h1">Find your next car.<br><em>Just ask.</em></h1>
+          <p class="lux-sub">Pre-owned cars, inspected and explained by AI.</p>
+          <div class="lux-cta">
+            <button class="pillbtn light" id="ctaAsk" type="button"><span>Ask Wazir</span><b>→</b></button>
+            <a class="pillbtn ghost" href="cars.html">View the collection</a>
+          </div>
+        </div>
+        <div class="lux-side"><div class="hv-chat" id="hvChat" aria-hidden="true"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== editorial mosaic ===== -->
+  <section class="section" id="story">
+    <div class="wrap">
+      <div class="mosaic">
+        <div class="m-text">
+          <span class="kicker">Our approach</span>
+          <h2>Pre-owned,<br><em>made transparent.</em></h2>
+          <p class="muted">Every car passes a 150-point inspection, carries an AGMC warranty and comes with a price check against the market. Wazir explains all of it in plain language, before you ever visit.</p>
+          <dl class="facts"><div><dt>Inspection</dt><dd>150 points</dd></div><div><dt>Warranty</dt><dd>6–12 months</dd></div><div><dt>Return guarantee</dt><dd>7 days</dd></div><div><dt>Test drive</dt><dd>1 hour, any day</dd></div></dl>
+        </div>
+        <figure class="m-photo big"><img src="img/AG-122.jpg" alt="" loading="lazy"><figcaption>Every car inspected, every price checked.</figcaption></figure>
+        <figure class="m-photo small"><img src="img/AG-114.jpg" alt="" loading="lazy"></figure>
+        <div class="m-dark"><span class="kicker">The advisor</span><h3>One conversation, from first question to handover.</h3><button class="pillbtn light" id="storyAsk" type="button"><span>Meet Wazir</span><b>→</b></button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== shop by brand ===== -->
+  <section class="section brandsec" id="brands">
+    <div class="wrap">
+      <div class="coll-head"><div><span class="kicker">Shop by brand</span><h2>Car category</h2></div><a class="pillbtn dark" href="brand.html"><span>All brands</span><b>→</b></a></div>
+      <div class="brand-tiles" id="brandTiles"></div>
+    </div>
+  </section>
+
+  <!-- ===== latest arrivals ===== -->
+  <section class="section coll" id="inventory">
+    <div class="wrap">
+      <div class="coll-head">
+        <div><span class="kicker">Pre-owned inventory</span><h2>Latest arrivals</h2><p class="muted">Hand-picked from our inspected collection.</p></div>
+        <a class="pillbtn dark" href="cars.html"><span>View all cars</span><b>→</b></a>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+</main>
+
+<script src="data.js"></script>
+<script src="core.js"></script>
+<script src="home.js"></script>
+<script src="agent.js"></script>
+</body>
+</html>
