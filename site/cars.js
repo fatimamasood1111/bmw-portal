@@ -33,7 +33,7 @@
     const list = P.filterCars(F);
     if (aiNote && Object.keys(scores).length) list.sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
     $("#grid").innerHTML = list.map((c) => P.cardHtml(c, { score: scores[c.id] })).join("");
-    $("#count").textContent = `${list.length} car${list.length === 1 ? "" : "s"} available`;
+    $("#count").textContent = `${list.length} car${list.length === 1 ? "" : "s"} available`; $("#barCount").textContent = `${list.length} car${list.length === 1 ? "" : "s"} available`;
     $("#empty").hidden = list.length > 0;
     const b = $("#aiBanner"); b.hidden = !aiNote;
     b.innerHTML = aiNote ? `<span>${P.SPARK} Curated by Wazir — ${esc(aiNote)}</span><button class="link" id="bClear">Show all</button>` : "";
@@ -69,4 +69,10 @@
   const bar = document.querySelector(".cars-bar"); if (!bar) return;
   const upd = () => bar.classList.toggle("stuck", bar.getBoundingClientRect().top <= 88);
   addEventListener("scroll", upd, { passive: true }); upd();
+})();
+/* the header row follows the filter bar's real height (it wraps when several filters are set), so the list never sits under it */
+(function () {
+  const grid = document.querySelector(".cars-grid"), bar = document.querySelector(".cars-bar-in"); if (!grid || !bar || !window.ResizeObserver) return;
+  const set = () => grid.style.setProperty("--bar-h", bar.offsetHeight + "px");
+  new ResizeObserver(set).observe(bar); set();
 })();

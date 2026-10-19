@@ -32,5 +32,9 @@
   $("#brandTiles").innerHTML = topBrands.map((m) => { const c = CARS.find((x) => x.make === m); return `<a class="btile" href="cars.html?make=${encodeURIComponent(m)}"><img src="img/${c.id}.jpg" alt="" loading="lazy"><span class="bt-name">${esc(m)}</span><span class="bt-n">${CARS.filter((x) => x.make === m).length} cars</span><span class="bt-go">↗</span></a>`; }).join("");
 
   /* ---------- latest arrivals: a taste of the collection, the rest lives on cars.html ---------- */
-  $("#grid").innerHTML = CARS.slice().sort((a, b) => P.deal(b).saving - P.deal(a).saving).slice(0, 6).map((c) => P.cardHtml(c)).join("");
+  $("#grid").className = "rc-list";
+  $("#grid").innerHTML = CARS.slice().sort((a, b) => P.deal(b).saving - P.deal(a).saving).slice(0, 4).map((c) => { const d = P.deal(c);
+    return `<a class="rc" href="${P.carHref(c.id)}"><div class="rc-img">${P.carImg(c)}<span class="chip deal ${d.tone}"><i></i>${d.label}</span></div>
+      <div class="rc-body"><span class="make">${esc(c.make)} · ${c.year}</span><h3>${esc(c.model)}</h3><p class="rc-line">${P.km(c.mileage)} · ${c.fuel} · ${c.power} hp · ${c.seats} seats</p><p class="rc-blurb">${esc(c.blurb)}</p>
+        <div class="rc-foot"><div class="price">${money(c.price)}</div><span class="rc-go">View car →</span></div></div></a>`; }).join("");
 })();

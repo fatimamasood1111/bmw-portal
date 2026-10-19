@@ -103,9 +103,8 @@
     const d = deal(c), res = isReserved(c.id);
     return `<a class="car" href="${carHref(c.id)}" data-id="${c.id}">
       <div class="car-img">${carImg(c)}<span class="chip deal ${d.tone}"><i></i>${d.label}</span>${opts.score ? `<span class="chip match">✦ ${opts.score}% match</span>` : ""}${res ? `<span class="chip res">Reserved</span>` : ""}</div>
-      <div class="car-top"><span class="make">${esc(c.make)} · ${c.year}</span><h3>${esc(c.model)}</h3>
-        <div class="specs"><span>${km(c.mileage)}</span><span>${c.fuel}</span><span>${c.power} hp</span><span>${c.seats} seats</span></div></div>
-      <div class="car-foot"><div class="price">${money(c.price)}<small>est. ${money(monthly(c.price))} / month</small></div><span class="go">View →</span></div></a>`;
+      <div class="car-top"><span class="make">${esc(c.make)} · ${c.year}</span><h3>${esc(c.model)}</h3></div>
+      <div class="car-foot"><div class="price">${money(c.price)}</div><span class="go">View →</span></div></a>`;
   }
   /* ---------- actions (shared by pages + Wazir) ---------- */
   function bookTestDrive({ car_id, name: cust, phone, date, time }) {
@@ -155,16 +154,16 @@
     x: '<svg viewBox="0 0 24 24"><path d="M5 4l14 16M19 4L5 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>',
   };
   function footerHtml() {
-    const brands = [...new Set(CARS.map((c) => c.make))].map((m) => ({ m, n: CARS.filter((c) => c.make === m).length })).sort((a, b) => b.n - a.n || a.m.localeCompare(b.m)).slice(0, 8);
-    const pop = (C.popular || []).map(carById).filter(Boolean), ct = C.contact || {};
+    const brands = [...new Set(CARS.map((c) => c.make))].map((m) => ({ m, n: CARS.filter((c) => c.make === m).length })).sort((a, b) => b.n - a.n || a.m.localeCompare(b.m)).slice(0, 8).map((b) => b.m), ct = C.contact || {}, apps = C.apps || {};
     return `<footer class="footer"><div class="wrap">
       <div class="foot-cta"><div><h3>Not sure which car is right for you?</h3><p>Tell ${esc(C.advisor)} what you need. It shortlists, explains and books your test drive.</p></div><button class="btn solid" id="footAsk">Ask ${esc(C.advisor)} →</button></div>
       <div class="foot-grid">
-        <div><div class="logo">${logoHtml()}</div><p style="margin-top:16px">Pre-owned cars, 150-point inspected and explained by AI. Every car comes with an AGMC warranty and a 7-day return guarantee.</p>
-          <div class="contact"><a href="${esc(ct.phoneHref || "#")}"><i>CALL</i>${esc(ct.phone || "")}</a><a href="${esc(ct.whatsappHref || "#")}" target="_blank" rel="noopener"><i>WHATSAPP</i>${esc(ct.whatsapp || "")}</a><a href="mailto:${esc(ct.email || "")}"><i>EMAIL</i>${esc(ct.email || "")}</a></div>
+        <div><div class="logo">${logoHtml()}</div>
+          <div class="contact" style="margin-top:20px"><a href="${esc(ct.phoneHref || "#")}"><i>CALL</i>${esc(ct.phone || "")}</a><a href="${esc(ct.whatsappHref || "#")}" target="_blank" rel="noopener"><i>WHATSAPP</i>${esc(ct.whatsapp || "")}</a><a href="mailto:${esc(ct.email || "")}"><i>EMAIL</i>${esc(ct.email || "")}</a></div>
+          <div class="apps"><span class="apps-l">Get the app</span><a class="appbtn" href="${esc(apps.ios || "#")}" target="_blank" rel="noopener"><span><small>Download on the</small>App Store</span></a><a class="appbtn" href="${esc(apps.android || "#")}" target="_blank" rel="noopener"><span><small>Get it on</small>Google Play</span></a></div>
           <div class="social">${Object.entries(C.social || {}).map(([k, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener" aria-label="${k}">${SOC[k] || ""}</a>`).join("")}</div></div>
-        <div><h4>Popular brands</h4><ul class="foot-list">${brands.map((b) => `<li><a href="${brandHref(b.m)}">${esc(b.m)}<small>${b.n}</small></a></li>`).join("")}<li><a href="cars.html">All cars →</a></li></ul></div>
-        <div><h4>Popular right now</h4><ul class="foot-list">${pop.map((c) => `<li class="pc"><a href="${carHref(c.id)}">${c.year} ${esc(c.make)} ${esc(c.model)}</a><span>${money(c.price)}</span></li>`).join("")}</ul></div>
+        <div><h4>Brands</h4><ul class="foot-list brands-list">${brands.map((m) => `<li><a href="${brandHref(m)}">${esc(m)}</a></li>`).join("")}<li><a href="brand.html">All brands →</a></li></ul></div>
+        <div class="about"><h4>About us</h4><p>${esc(C.brand)} is a Dubai pre-owned car dealership. Every car is 150-point inspected, backed by an AGMC warranty and a 7-day return guarantee, and priced against the market.</p><p>Our AI advisor, ${esc(C.advisor)}, helps you find, compare and book a test drive in one conversation, and our team is on hand at the showroom.</p></div>
         <div><h4>Visit us</h4><div class="loc">${(C.locations || []).map((l) => `<div><b>${esc(l.name)}</b><span>${esc(l.addr)}<br>${esc(l.hours)}</span></div>`).join("")}</div><p style="margin-top:16px"><a href="${esc(C.allLocationsUrl || "#")}" target="_blank" rel="noopener">View all locations →</a></p></div>
       </div>
       <div class="foot-bar"><span>© 2026 ${esc(C.brand)}. Demonstration portal: inventory, prices and bookings are sample data.</span><span><a href="#">Terms</a><a href="#">Privacy</a><a href="#top">Back to top</a>${C.showPhotoCredits ? `<a href="#" class="link" id="btnCredits">Photo credits</a>` : ""}</span></div>
@@ -176,6 +175,7 @@
       <nav class="nav"><a href="cars.html">Cars</a><a href="brand.html">Brands</a></nav>
       <div class="bar-actions">
         
+        <button class="tbtn" id="btnLang" data-noi18n aria-label="Language">${window.I18N && I18N.lang === "ar" ? "EN" : "عربي"}</button>
         <button class="tbtn" id="btnStyle">Style</button>
         <button class="btn solid sm" id="btnAsk">${SPARK} Ask ${esc(C.advisor)}</button>
       </div></div></header>`);
@@ -183,7 +183,7 @@
     ${footerHtml()}
     <div class="overlay" id="modalOverlay" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
     <aside class="drawer" id="drawer" hidden><div class="drawer-head"><h3>My activity</h3><button class="x" data-close="drawer" aria-label="Close">×</button></div><div id="drawerBody"></div></aside>
-    <aside class="stylepanel" id="stylePanel" hidden>
+    <aside class="stylepanel" id="stylePanel" hidden data-noi18n>
       <div class="drawer-head"><h3>Style studio</h3><button class="x" data-close="stylePanel" aria-label="Close">×</button></div>
       <div class="sp-body">${document.body.dataset.page === "home" ? `<h4>Hero photo</h4><p class="tiny" style="margin:0 0 12px">Try any image behind the headline. It stays in this browser only.</p><div class="heroph"><label class="filebtn">Choose photo…<input type="file" id="spPhoto" accept="image/*" hidden></label><button type="button" class="tbtn dark" id="spPhotoReset">Reset</button><a class="tbtn dark" id="spPhotoDl" download="hero.jpg" hidden>Download hero.jpg</a></div><label class="range">Overlay darkness <input type="range" id="spShade" min="0" max="100" value="100"></label><h4 style="margin-top:22px">Or try one of these</h4><div class="hopts" id="spHeroOpts"></div><h4>Wazir chat preview in hero</h4><div class="seg" id="spHeroChat"></div>` : ""}<h4>Colour palette</h4><div class="pals" id="spPal"></div><h4>Custom colours</h4><div class="c2"><label><input type="color" id="spC1"><span>Beige<br><small>colour 1</small></span></label><label><input type="color" id="spC2"><span>Accent<br><small>colour 2</small></span></label></div><h4>Page theme</h4><div class="seg" id="spMode"></div>
         <h4>Corners</h4><div class="seg" id="spRadius"></div><h4>Typography</h4><div class="seg" id="spFont"></div>
@@ -192,6 +192,7 @@
     <div class="toast" id="toast" hidden></div>`);
 
     
+    $("#btnLang").onclick = () => I18N.set(I18N.lang === "ar" ? "en" : "ar");
     $("#btnStyle").onclick = () => { $("#drawer").hidden = true; $("#stylePanel").hidden = !$("#stylePanel").hidden; };
     if ($("#btnCredits")) $("#btnCredits").onclick = openCredits;
     $("#drawerBody").addEventListener("click", (e) => { const b = e.target.closest("[data-cancel]"); if (b) { cancelItem(b.dataset.cancel, b.dataset.ref); toast("Cancelled"); } });

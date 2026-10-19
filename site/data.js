@@ -15,6 +15,7 @@ window.CONFIG = {
   ],
   allLocationsUrl: "https://www.agmc.com/en/contact",
   social: { linkedin: "https://www.linkedin.com/company/agmc/", instagram: "#", facebook: "#", youtube: "#", x: "#" },   // only LinkedIn is confirmed; replace the # placeholders
+  apps: { ios: "#", android: "#" },   // App Store / Google Play links — replace the # placeholders when the apps are live
   popular: ["AG-101", "AG-104", "AG-122", "AG-116"],   // "Popular right now" in the footer
   model: "qwen2.5:3b",               // local Ollama model
   showPhotoCredits: false,           // set true to show photographer credits (required for the Wikimedia photos once the site is public)

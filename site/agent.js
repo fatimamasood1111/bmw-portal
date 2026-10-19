@@ -34,7 +34,10 @@ const Agent = (function () {
   /* Small local models invent filter values. Re-derive them from what the customer actually typed. */
   const userText = () => state.history.filter((m) => m.role === "user").map((m) => m.content).join(" . ").toLowerCase();
   const toNum = (s) => { s = s.replace(/,/g, ""); const m = s.match(/(\d+(?:\.\d+)?)\s*(k|thousand)?/i); return m ? Math.round(+m[1] * (m[2] ? 1000 : 1)) : NaN; };
+  /* "what cars do you have" is a fresh browse: drop every filter, and do not inherit budgets or years from earlier messages */
+  const BROWSE = /\b(what|which) (cars|vehicles) (do|have) (you|u)|\bwhat(?:'s| is) (available|in stock)|\b(show|list) (me )?(all|everything|your cars|the cars)|\ball (your |the )?(cars|inventory|stock)|\binventory\b|\bwhat do you (have|sell)|\banything you have\b/;
   function ground(f) {
+    if (BROWSE.test(lastUser.toLowerCase())) { for (const k of Object.keys(f)) if (k !== "sort") delete f[k]; return; }
     const t = userText(), N = "(?:aed|usd|\\$)?\\s*(\\d[\\d,.]*\\s*(?:k|thousand)?)";
     const grab = (re) => { const m = t.match(new RegExp(re.replace("#", N), "i")); return m ? toNum(m[1]) : NaN; };
     const max = grab("(?:under|below|less than|up to|within|max(?:imum)?(?: of)?|at most|budget(?: is| of| around)?|around|about|cheaper than)\\s*#"), min = grab("(?:over|above|more than|at least|min(?:imum)?(?: of)?|starting from)\\s*#");
@@ -109,7 +112,7 @@ You control the website with tools. Rules:
 4. To book a test drive you need: car, name, phone, date, time. Ask for whatever is missing in one message. As soon as you have all five, call book_test_drive IMMEDIATELY (24h time, e.g. 3pm = 15:00) — do not call check_test_drive_slots first; book_test_drive tells you the free slots if the time is taken. Use check_test_drive_slots only when the customer asks what times are free and has not chosen one. NEVER say a booking is confirmed unless book_test_drive returned ok:true; if it fails, explain and offer the available slots.
 5. To buy: offer a test drive, then reserve_car (needs name, phone and payment method: card, bank transfer or cash at the showroom). The deposit is ${money(C.depositAmount)}, refundable, holds the car 7 days. Do not reserve without a clear yes. Do not discuss financing, instalments or trade-ins; if asked, say a team member will help in person at the showroom.
 6. Quote only numbers that appear in tool results; never calculate or estimate payments or values yourself. For details of one car call get_car_details; to compare cars call compare_cars. Plain text, no markdown tables, no emojis. Prices as "${C.currency} 62,900".
-7. If a question is unrelated to cars or this platform, politely steer back.${vc ? `\nThe customer is currently viewing ${P.name(vc)} (${vc.id}), priced ${money(vc.price)}. Questions like "this car" or "it" refer to it — call get_car_details with that id when you need specs.` : ""}${s.bookings.length ? `\nCustomer currently has ${s.bookings.length} test drive(s) booked.` : ""}`;
+7. If a question is unrelated to cars or this platform, politely steer back.${window.I18N && I18N.lang === "ar" ? "\nLANGUAGE: The customer is using the Arabic site. Always reply in simple Modern Standard Arabic. Keep car makes, models, ids and numbers exactly as in the tool results (Latin script)." : ""}${vc ? `\nThe customer is currently viewing ${P.name(vc)} (${vc.id}), priced ${money(vc.price)}. Questions like "this car" or "it" refer to it — call get_car_details with that id when you need specs.` : ""}${s.bookings.length ? `\nCustomer currently has ${s.bookings.length} test drive(s) booked.` : ""}`;
   };
 
   /* ---------- panel UI ---------- */
@@ -163,7 +166,7 @@ You control the website with tools. Rules:
     $("#wzClose").onclick = close; $("#wzNew").onclick = reset;
     $("#wzWide").onclick = () => { state.wide = !state.wide; $("#wz").classList.toggle("wide", state.wide); save(); };
     $("#wzForm").onsubmit = (e) => { e.preventDefault(); const v = $("#wzInput").value; $("#wzInput").value = ""; run(v); };
-    scroller().addEventListener("click", (e) => { const b = e.target.closest("[data-p]"); if (b) run(b.dataset.p); });
+    scroller().addEventListener("click", (e) => { const b = e.target.closest("[data-p]"); if (b) run(window.I18N ? I18N.tr(b.dataset.p) : b.dataset.p); });
     $("#wzSugg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) run(b.textContent); });
     $("#wz").classList.toggle("wide", !!state.wide);
     if (state.log.length) state.log.forEach(render); else welcome();
@@ -208,9 +211,10 @@ You control the website with tools. Rules:
 
   async function run(text) {
     text = (text || "").trim(); if (busy || !text) return; if (!$("#wz").classList.contains("open")) open();
+    const shown = text; if (window.I18N && I18N.lang === "ar" && window.arToEn) text = window.arToEn(text);
     setBusy(true); lastUser = text; shownIds = [];
     scroller().querySelector(".wz-welcome")?.remove();
-    log({ k: "user", t: text }); state.history.push({ role: "user", content: text }); save(); $("#wzSugg").innerHTML = "";
+    log({ k: "user", t: shown }); state.history.push({ role: "user", content: text }); save(); $("#wzSugg").innerHTML = "";
     try {
       for (let step = 0; step < 6; step++) {
         const think = add(`${AVA}<b>${esc(C.advisor)} is thinking…</b>`, "wz-think"); let bubble = null;
