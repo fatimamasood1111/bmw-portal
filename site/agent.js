@@ -4,6 +4,9 @@ const Agent = (function () {
   const P = Portal, C = CONFIG, $ = P.$, esc = P.esc, money = P.money;
   const MODEL_KEY = "agmc_model", SKEY = "agmc_chat";
   let model = P.safe(() => localStorage.getItem(MODEL_KEY), null) || C.model;
+  /* Where Ollama lives: through server.py's /ollama proxy when served over http; straight to Ollama when the site is opened as a plain file
+     (that needs Ollama started with OLLAMA_ORIGINS=*, see start-wazir.bat). Override with CONFIG.ollamaUrl or ?ollama=http://host:11434 */
+  const OL = new URLSearchParams(location.search).get("ollama") || C.ollamaUrl || (location.protocol === "file:" ? "http://localhost:11434" : "/ollama");
   let state = P.safe(() => JSON.parse(sessionStorage.getItem(SKEY)), null) || { history: [], log: [], open: false, wide: false };
   let busy = false, shownIds = [], lastUser = "";
   const save = () => P.safe(() => sessionStorage.setItem(SKEY, JSON.stringify(state)));
@@ -181,14 +184,14 @@ You control the website with tools. Rules:
   async function checkStatus() {
     const dot = $("#wzDot"), st = $("#wzStatus");
     try {
-      const j = await (await fetch("/ollama/api/tags")).json(), has = (j.models || []).some((m) => m.name === model || m.name.startsWith(model + ":") || m.name === model + ":latest");
+      const j = await (await fetch(OL + "/api/tags")).json(), has = (j.models || []).some((m) => m.name === model || m.name.startsWith(model + ":") || m.name === model + ":latest");
       dot.className = "wz-dot " + (has ? "ok" : "bad"); st.textContent = has ? "Online · AI car advisor" : "Unavailable";
     } catch { dot.className = "wz-dot bad"; st.textContent = "Unavailable"; }
   }
 
   /* ---------- Ollama streaming ---------- */
   async function chatOnce(messages, onToken) {
-    const res = await fetch("/ollama/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model, messages, tools: TOOLS, stream: true, keep_alive: "30m", options: { temperature: 0.3, num_ctx: 4096 } }) });
+    const res = await fetch(OL + "/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model, messages, tools: TOOLS, stream: true, keep_alive: "30m", options: { temperature: 0.3, num_ctx: 4096 } }) });
     if (!res.ok || !res.body) { let m = res.statusText; try { m = (await res.json()).error || m; } catch {} throw new Error(m); }
     const reader = res.body.getReader(), dec = new TextDecoder(); let buf = "", content = "", calls = [];
     for (;;) {
@@ -276,5 +279,5 @@ You control the website with tools. Rules:
   }
 
   mount();
-  return { open, close, send: run, setModel(m) { model = m; P.safe(() => localStorage.setItem(MODEL_KEY, m)); checkStatus(); }, tools: TOOLS, exec: EXEC };
+  return { open, close, send: run, log, ui: renderUi, state, save, setModel(m) { model = m; P.safe(() => localStorage.setItem(MODEL_KEY, m)); checkStatus(); }, tools: TOOLS, exec: EXEC };
 })();

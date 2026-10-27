@@ -126,7 +126,7 @@
     count.textContent = `${gi + 1} / ${imgs.length}`;
     [...thumbs.children].forEach((b, k) => b.classList.toggle("on", k === gi));
   }
-  fetch("gallery.json").then((r) => (r.ok ? r.json() : {})).then((g) => {
+  (window.GALLERY ? Promise.resolve(window.GALLERY) : fetch("gallery.json").then((r) => (r.ok ? r.json() : {}))).then((g) => {
     const extra = (g[c.id] || []).map((x) => x.src); if (!extra.length) return;
     imgs = imgs.concat(extra);
     thumbs.innerHTML = imgs.map((s, k) => `<button type="button" data-i="${k}" aria-label="Photo ${k + 1}"><img src="${s}" alt="" loading="lazy"></button>`).join("");
