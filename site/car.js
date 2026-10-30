@@ -1,6 +1,6 @@
 /* Car page: full specifications, price insight, Wazir's take, booking + reservation. URL: car.html?id=AG-101 */
 (function () {
-  const P = Portal, { $, esc, money, km } = P, C = CONFIG, CARS = window.CARS;
+  const P = Portal, { $, esc, money, km, known, nr } = P, C = CONFIG, CARS = window.CARS;
   const id = new URLSearchParams(location.search).get("id"), c = P.carById(id);
   const root = $("#carPage");
 
@@ -22,11 +22,12 @@
     if (d.tone === "great" || d.tone === "good") pos.push(`${d.label}: ${money(d.saving)} below our market estimate`);
     else if (d.tone === "high") warn.push(`Priced ${money(-d.saving)} above our market estimate, so there may be room to negotiate`);
     if (perYr <= 12000) pos.push(`Low mileage for its age (about ${km(perYr)} a year)`); else if (perYr > 20000) warn.push(`Higher than average mileage (about ${km(perYr)} a year)`);
-    pos.push(c.owners === 1 ? "One previous owner with a full dealer service history" : "Full service history");
-    if (c.accel <= 5) pos.push(`Seriously quick: 0–100 km/h in ${c.accel}s`);
+    if (known(c.service)) pos.push(c.owners === 1 ? `One previous owner with a ${c.service[0].toLowerCase()}${c.service.slice(1)}` : c.service);
+    if (known(c.accel) && c.accel <= 5) pos.push(`Seriously quick: 0–100 km/h in ${c.accel}s`);
     if (isEv) pos.push("Zero tailpipe emissions and very low running costs"); else if (c.fuel === "Hybrid") pos.push(`Hybrid economy of ${c.cons}`);
     if (c.seats >= 7) pos.push(`Seats up to ${c.seats} people`);
-    pos.push(`${c.inspection}/150 inspection checks passed, with an AGMC warranty of ${c.warranty}`);
+    if (known(c.inspection)) pos.push(`${c.inspection}/150 inspection checks passed` + (known(c.warranty) ? `, with an AGMC warranty of ${c.warranty}` : ""));
+    else if (known(c.warranty)) pos.push(`An AGMC warranty of ${c.warranty}`);
     if (c.owners >= 2) warn.push(`${c.owners} previous owners`);
     if (c.fuel === "Petrol" && lph >= 12) warn.push(`Thirsty at ${c.cons}`);
     if (age >= 6) warn.push(`${age} years old, so ask about wear items like tyres and brakes`);
@@ -46,13 +47,13 @@
     <nav class="crumbs"><a href="cars.html">All cars</a><span>/</span><a href="brand.html?make=${encodeURIComponent(c.make)}">${esc(c.make)}</a><span>/</span>${esc(c.model)}</nav>
 
     <div class="mosaic car-mosaic">
-      <figure class="m-photo big gal" id="gal"><button class="gal-main" id="galMain" type="button" aria-label="Open photo gallery">${P.carImg(c)}</button><figcaption>${esc(c.colorName)} · ${c.seats} seats · ${esc(c.drive)}</figcaption><span class="gal-count" id="galCount" hidden></span><div class="gal-thumbs" id="galThumbs" hidden></div></figure>
+      <figure class="m-photo big gal" id="gal"><button class="gal-main" id="galMain" type="button" aria-label="Open photo gallery">${P.carImg(c)}</button><figcaption>${[esc(c.colorName), known(c.seats) ? `${c.seats} seats` : "", esc(c.drive)].filter(Boolean).join(" · ")}</figcaption><span class="gal-count" id="galCount" hidden></span><div class="gal-thumbs" id="galThumbs" hidden></div></figure>
       <div class="m-text">
         <div class="cp-head"><span class="kicker">Pre-owned · ${c.id}</span><div class="cp-tools"><button type="button" id="bSave" class="tool" aria-pressed="false"><span class="ic">♡</span><span id="saveTxt">Save</span></button><button type="button" id="bShare" class="tool"><span class="ic">↗</span>Share</button></div></div>
         <h1 class="cp-title">${c.year} ${esc(c.make)}<br><em>${esc(c.model)}</em></h1>
         <div class="cp-price">${money(c.price)}</div>
         <div class="cp-mo">est. ${money(P.monthly(c.price))} / month · 48 months, 20% down</div>
-        <dl class="facts"><div><dt>Mileage</dt><dd>${km(c.mileage)}</dd></div><div><dt>Fuel</dt><dd>${c.fuel}</dd></div><div><dt>Power</dt><dd>${c.power} hp</dd></div><div><dt>Previous owners</dt><dd>${c.owners}</dd></div><div><dt>Inspection</dt><dd>${c.inspection} / 150</dd></div></dl>
+        <dl class="facts"><div><dt>Mileage</dt><dd>${km(c.mileage)}</dd></div><div><dt>Fuel</dt><dd>${c.fuel}</dd></div><div><dt>Power</dt><dd>${nr(c.power, (x) => `${x} hp`)}</dd></div><div><dt>Previous owners</dt><dd>${nr(c.owners)}</dd></div><div><dt>Inspection</dt><dd>${nr(c.inspection, (x) => `${x} / 150`)}</dd></div></dl>
         <div class="cta" id="cta">${reserved ? `<p class="muted"><b>This car is reserved.</b> Ask Wazir for similar cars.</p>` : `<button class="pillbtn dark" id="bTD" type="button"><span>Book a test drive</span><b>→</b></button><button class="pillbtn outline" id="bRes" type="button">Reserve · ${money(C.depositAmount)}</button>`}</div>
         <div id="formArea"></div>
       </div>
@@ -72,11 +73,11 @@
     <div class="sec"><div class="sheet">
       <div class="sheet-head"><h2>Specifications</h2><span>${esc(P.name(c))} · ${c.id}</span></div>
       <div class="acc-list">
-        <details class="acc" open><summary>Overview</summary><dl>${row("Make", esc(c.make))}${row("Model", esc(c.model))}${row("Year", c.year)}${row("Body type", c.body)}${row("Condition", "Pre-owned")}${row("Mileage", km(c.mileage))}${row("Exterior colour", esc(c.colorName))}${row("Interior", esc(c.interior))}${row("Regional spec", esc(c.spec))}</dl></details>
-        <details class="acc" open><summary>Engine &amp; performance</summary><dl>${row("Engine", esc(c.engine))}${row("Power", `${c.power} hp`)}${row("Torque", `${c.torque} Nm`)}${row("Transmission", c.transmission)}${row("Drivetrain", c.drive)}${row("0–100 km/h", `${c.accel} s`)}${row("Top speed", `${c.top} km/h`)}${row("Fuel type", c.fuel)}${row(isEv ? "Energy use" : "Fuel consumption", esc(c.cons))}</dl></details>
-        <details class="acc"><summary>Capacity</summary><dl>${row("Seats", c.seats)}${row("Doors", c.doors)}${row("Boot capacity", `${c.boot} L`)}</dl></details>
-        <details class="acc"><summary>History &amp; inspection</summary><dl>${row("Previous owners", c.owners)}${row("Service history", esc(c.service))}${row("Accident history", esc(c.accident))}${row("AGMC inspection", `${c.inspection} / 150 passed`)}${row("AGMC warranty", esc(c.warranty))}${row("Price vs market", `${d.label}`)}</dl></details>
-      <details class="acc"><summary>Key features</summary><div class="feat">${c.features.map((f) => `<span>${esc(f)}</span>`).join("")}</div></details>
+        <details class="acc" open><summary>Overview</summary><dl>${row("Make", esc(c.make))}${row("Model", esc(c.model))}${row("Year", c.year)}${row("Body type", c.body)}${row("Condition", "Pre-owned")}${row("Mileage", km(c.mileage))}${row("Exterior colour", nr(c.colorName, esc))}${row("Interior", nr(c.interior, esc))}${row("Regional spec", nr(c.spec, esc))}</dl></details>
+        <details class="acc" open><summary>Engine &amp; performance</summary><dl>${row("Engine", nr(c.engine, esc))}${row("Power", nr(c.power, (x) => `${x} hp`))}${row("Torque", nr(c.torque, (x) => `${x} Nm`))}${row("Transmission", nr(c.transmission, esc))}${row("Drivetrain", nr(c.drive, esc))}${row("0–100 km/h", nr(c.accel, (x) => `${x} s`))}${row("Top speed", nr(c.top, (x) => `${x} km/h`))}${row("Fuel type", nr(c.fuel, esc))}${row(isEv ? "Energy use" : "Fuel consumption", nr(c.cons, esc))}</dl></details>
+        <details class="acc"><summary>Capacity</summary><dl>${row("Seats", nr(c.seats))}${row("Doors", nr(c.doors))}${row("Boot capacity", nr(c.boot, (x) => `${x} L`))}</dl></details>
+        <details class="acc"><summary>History &amp; inspection</summary><dl>${row("Previous owners", nr(c.owners))}${row("Service history", nr(c.service, esc))}${row("Accident history", nr(c.accident, esc))}${row("AGMC inspection", nr(c.inspection, (x) => `${x} / 150 passed`))}${row("AGMC warranty", nr(c.warranty, esc))}${row("Price vs market", `${d.label}`)}</dl></details>
+      <details class="acc"><summary>Key features</summary><div class="feat">${(c.features || []).map((f) => `<span>${esc(f)}</span>`).join("") || "<span>Not recorded</span>"}</div></details>
       </div>
     </div></div>
 

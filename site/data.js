@@ -20,6 +20,7 @@ window.CONFIG = {
   model: "qwen2.5:3b",               // local Ollama model
   showPhotoCredits: false,           // set true to show photographer credits (required for the Wikimedia photos once the site is public)
   autoOpenCar: true,                 // Wazir opens the car page when it recommends one
+  stockUrl: "",                      // the stock API (voice-agent: python -m dealer_core.inventory serve), e.g. "https://stock.agmc.com". Empty: the demo cars below
 };
 
 /* car(id, make, model, year, price, km, body, fuel, seats, colourName, colourHex, hp, nm, engine, drivetrain, accel0to100, topSpeed,
@@ -61,3 +62,22 @@ window.CARS = [
   const age = 2026 - c.year;
   return { ...c, market: Math.round((c.price * f) / 500) * 500, warranty: age <= 5 && c.mileage <= 80000 ? "12 months / 20,000 km" : "6 months / 10,000 km", inspection: 146 + (i % 5) };
 });
+
+/* Live stock. With CONFIG.stockUrl set, the cars and the showroom details come from the stock database, the same one the voice agent
+   reads: /api/site-cars.js replaces window.CARS (and the hours, locations and contact in window.CONFIG) before any page script runs.
+   The cars above are then only what is shown if the API cannot be reached. A fact the stock list does not record is null; pages show "Not recorded".
+   For testing on this machine: ?stock=http://127.0.0.1:8070 on any page (remembered for the browser tab; ?stock=off goes back to the demo). */
+(function () {
+  const local = (u) => /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/.test(u);      // only a local API may be chosen from the address bar
+  let url = CONFIG.stockUrl || "";
+  try {
+    const q = new URLSearchParams(location.search).get("stock");
+    if (q === "off") sessionStorage.removeItem("agmc_stock");
+    else if (q && local(q)) sessionStorage.setItem("agmc_stock", q);
+    url = sessionStorage.getItem("agmc_stock") || url;
+  } catch (e) { /* storage blocked: CONFIG.stockUrl only */ }
+  if (!url) return;
+  window.STOCK = { url: url.replace(/\/$/, ""), demo: window.CARS };
+  document.write('<script src="' + encodeURI(window.STOCK.url) + '/api/site-cars.js" onerror="window.STOCK.failed=true;console.warn(\'Stock API not reachable at ' +
+                 encodeURI(window.STOCK.url) + ': showing the demo cars\')"><\/script>');
+})();

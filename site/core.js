@@ -8,6 +8,9 @@
   const km = (n) => `${Math.round(n).toLocaleString("en-US")} km`;
   const safe = (fn, d) => { try { return fn(); } catch { return d; } };
   const name = (c) => `${c.year} ${c.make} ${c.model}`;
+  // a fact the stock list does not record is null (the stock API): shown as "Not recorded", never as "null" or a guess
+  const known = (v) => v !== null && v !== undefined && v !== "";
+  const nr = (v, fmt = (x) => x) => (known(v) ? fmt(v) : "Not recorded");
   const carHref = (id) => `car.html?id=${encodeURIComponent(id)}`;
   const brandHref = (m) => `brand.html?make=${encodeURIComponent(m)}`;
   // official logo: drop img/logo.svg (or logo.png) into site/img and it is used everywhere; falls back to the AGMC wordmark
@@ -34,6 +37,7 @@
     return Math.round(r ? (principal * r) / (1 - Math.pow(1 + r, -months)) : principal / months);
   }
   function deal(c) {
+    if (!known(c.market) || !c.market) return { label: "No price rating", tone: "none", pct: 0, saving: 0 };   // no market estimate recorded
     const pct = ((c.market - c.price) / c.market) * 100;
     const d = pct >= 6 ? ["Great price", "great"] : pct >= 3 ? ["Good price", "good"] : pct >= 0 ? ["Fair price", "fair"] : ["Above market", "high"];
     return { label: d[0], tone: d[1], pct: Math.round(pct * 10) / 10, saving: c.market - c.price };
@@ -61,9 +65,9 @@
 
   /* ---------- inventory helpers ---------- */
   const carById = (id) => { id = String(id || "").toUpperCase().trim(); return CARS.find((c) => c.id === id) || (/^\d{3}$/.test(id) ? CARS.find((c) => c.id === "AG-" + id) : null) || (/\d{3}/.test(id) ? CARS.find((c) => c.id.endsWith(id.match(/\d{3}/)[0])) : null); };
-  const isReserved = (id) => store.data.reservations.some((r) => r.car_id === id && r.status !== "cancelled");
+  const isReserved = (id) => store.data.reservations.some((r) => r.car_id === id && r.status !== "cancelled") || CARS.some((c) => c.id === id && c.status === "reserved");
   const brief = (c) => ({ id: c.id, name: name(c), price: c.price, price_rating: deal(c).label, mileage_km: c.mileage, body: c.body, fuel: c.fuel, seats: c.seats, power_hp: c.power, colour: c.colorName, ...(isReserved(c.id) ? { status: "reserved" } : {}) });
-  const full = (c) => ({ ...brief(c), make: c.make, model: c.model, year: c.year, engine: c.engine, torque_nm: c.torque, drivetrain: c.drive, transmission: c.transmission, acceleration_0_100_s: c.accel, top_speed_kmh: c.top, consumption: c.cons, boot_litres: c.boot, doors: c.doors, interior: c.interior, previous_owners: c.owners, regional_spec: c.spec, service_history: c.service, accident_history: c.accident, warranty: c.warranty, inspection: `${c.inspection}/150 checks passed`, market_price_estimate: c.market, features: c.features, description: c.blurb });
+  const full = (c) => ({ ...brief(c), make: c.make, model: c.model, year: c.year, engine: c.engine, torque_nm: c.torque, drivetrain: c.drive, transmission: c.transmission, acceleration_0_100_s: c.accel, top_speed_kmh: c.top, consumption: c.cons, boot_litres: c.boot, doors: c.doors, interior: c.interior, previous_owners: c.owners, regional_spec: c.spec, service_history: c.service, accident_history: c.accident, warranty: c.warranty, inspection: known(c.inspection) ? `${c.inspection}/150 checks passed` : null, market_price_estimate: c.market, features: c.features, description: c.blurb });
 
   function filterCars(f = {}) {
     const t = (f.text || f.model || "").toLowerCase().trim(), body = f.body ? String(f.body).toLowerCase() : "", make = f.make ? String(f.make).toLowerCase() : "";
@@ -275,7 +279,7 @@
   document.addEventListener("input", (e) => { if (e.target.id === "spShade") { S.shade = +e.target.value; paint(); persistStyle(); } });
   applyStyle(); // apply the saved theme immediately (before the chrome exists) to avoid a flash
   window.Portal = {
-    $, $$, esc, money, km, name, carHref, safe, iso, store, monthly, deal, normDate, freeSlots, carById, brief, full, filterCars, similar,
+    $, $$, esc, money, km, name, known, nr, carHref, safe, iso, store, monthly, deal, normDate, freeSlots, carById, brief, full, filterCars, similar,
     carImg, cardHtml, creditLine, brandHref, creditsReady, bookTestDrive, reserveCar, requestSourcing, cancelItem, toast, SPARK, renderDrawer, closeModal,
     openActivity: () => { renderDrawer(); $("#drawer").hidden = false; },
     // page hooks — the home page overrides these so Wazir can drive the inventory grid

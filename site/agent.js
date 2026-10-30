@@ -254,7 +254,7 @@ You control the website with tools. Rules:
     if (ui.compare) {
       ui.compare.forEach((id) => !shownIds.includes(id) && shownIds.push(id));
       const cs = ui.compare.map(P.carById), row = (k, f) => [k, cs.map(f).join(" | ")];
-      log({ k: "card", title: "Comparison", rows: [row("Car", (c) => `${c.make} ${c.model}`), row("Year", (c) => c.year), row("Price", (c) => money(c.price)), row("Mileage", (c) => P.km(c.mileage)), row("Power", (c) => c.power + " hp"), row("Fuel", (c) => c.fuel), row("Seats", (c) => c.seats)] });
+      log({ k: "card", title: "Comparison", rows: [row("Car", (c) => `${c.make} ${c.model}`), row("Year", (c) => c.year), row("Price", (c) => money(c.price)), row("Mileage", (c) => P.km(c.mileage)), row("Power", (c) => P.nr(c.power, (x) => x + " hp")), row("Fuel", (c) => c.fuel), row("Seats", (c) => c.seats)] });
     }
     if (ui.booking) { const b = ui.booking; log({ k: "card", title: `Test drive confirmed · ${b.ref}`, rows: [["Car", esc(b.car)], ["When", `${b.date} at ${b.time}`], ["Where", esc(C.location)], ["Name", esc(b.name)]] }); }
     if (ui.reservation) { const r = ui.reservation; log({ k: "card", title: `Car reserved · ${r.ref}`, rows: [["Car", esc(r.car)], ["Price", money(r.price)], ["Deposit", money(r.deposit)], ["Payment", r.payment_method.replace(/_/g, " ")]] }); }

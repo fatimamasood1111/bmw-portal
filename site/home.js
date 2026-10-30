@@ -35,6 +35,6 @@
   $("#grid").className = "rc-list";
   $("#grid").innerHTML = CARS.slice().sort((a, b) => P.deal(b).saving - P.deal(a).saving).slice(0, 4).map((c) => { const d = P.deal(c);
     return `<a class="rc" href="${P.carHref(c.id)}"><div class="rc-img">${P.carImg(c)}<span class="chip deal ${d.tone}"><i></i>${d.label}</span></div>
-      <div class="rc-body"><span class="make">${esc(c.make)} · ${c.year}</span><h3>${esc(c.model)}</h3><p class="rc-line">${P.km(c.mileage)} · ${c.fuel} · ${c.power} hp · ${c.seats} seats</p><p class="rc-blurb">${esc(c.blurb)}</p>
+      <div class="rc-body"><span class="make">${esc(c.make)} · ${c.year}</span><h3>${esc(c.model)}</h3><p class="rc-line">${[P.km(c.mileage), c.fuel, P.known(c.power) ? `${c.power} hp` : "", P.known(c.seats) ? `${c.seats} seats` : ""].filter(Boolean).join(" · ")}</p><p class="rc-blurb">${esc(c.blurb)}</p>
         <div class="rc-foot"><div class="price">${money(c.price)}</div><span class="rc-go">View car →</span></div></div></a>`; }).join("");
 })();
