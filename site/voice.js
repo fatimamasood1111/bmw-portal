@@ -15,7 +15,11 @@
   const URL_ = Q.get("voice") || C.voiceUrl || "ws://localhost:8765/voice";
   // With many voice servers, a router (CONFIG.voiceGateway, e.g. "http://localhost:8760") says which one to use for each call.
   const GATEWAY = Q.get("gateway") || C.voiceGateway || "";
-  let callId = "", retried = false;
+  let callId = "", retried = false, returning = false;
+  // A call that ended (hung up, or ended by Wazir after a quiet spell) is carried on if the visitor starts again within KEEP_MS: the server keeps it as long (voice.calls_kept_secs)
+  const KEEP_MS = 15 * 60 * 1000;
+  function lastCall() { try { const c = JSON.parse(localStorage.getItem("wzLastCall") || "null"); return c && Date.now() - c.at < KEEP_MS ? c.id : ""; } catch (e) { return ""; } }
+  function keepCall(id) { try { if (id) localStorage.setItem("wzLastCall", JSON.stringify({ id, at: Date.now() })); } catch (e) {} }
   async function serverUrl() {
     if (!GATEWAY) return URL_;
     const r = await fetch(GATEWAY.replace(/\/$/, "") + "/assign");
@@ -24,6 +28,10 @@
     return (await r.json()).url;
   }
   const MODE = (Q.get("voicemode") || C.voiceMode || "tap") === "handsfree" ? "handsfree" : "tap";
+  // ?mic=raw (or CONFIG.voiceMic = "raw"): the browser's noise suppression and automatic gain control are switched OFF for the microphone (echo cancellation stays on).
+  // Safari's processing is the suspect for choppy / half-missing microphone audio (voice-agent docs/ARCH_REVIEW.md, section 7). Default is unchanged: the server's quiet-speech
+  // thresholds were set against levels measured WITH automatic gain, so compare first (the worker log prints each turn's level), then change the default.
+  const RAW_MIC = (Q.get("mic") || C.voiceMic || "") === "raw";
 
   let ws = null, ctx = null, stream = null, node = null, src = null, nextAt = 0, sources = [];
   let phase = "idle";                       // idle | connecting | listening | thinking | speaking | waiting      (waiting = mic closed, tap to reply)
@@ -73,7 +81,7 @@
   // ---- the microphone: opened for a turn, released after it (tap mode) ----------------------------------------------------------------------
   async function openMic() {
     if (micOn || !ctx) return;
-    stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: !RAW_MIC, autoGainControl: !RAW_MIC } });
     src = ctx.createMediaStreamSource(stream);
     src.connect(node);
     micOn = true;
@@ -103,6 +111,8 @@
       stop(); note("I need microphone access to hear you. Allow the microphone for this site, or type instead.");
       return;
     }
+    returning = false;
+    if (!callId) { callId = lastCall(); returning = !!callId; }
     if (!callId) callId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()).slice(0, 36);
     let url;
     try { url = await serverUrl(); } catch (e) {
@@ -114,7 +124,7 @@
     ws.onopen = () => {
       // Tell the server which car page this is, how the visitor wants to talk, and what they already have booked or reserved, so Wazir never offers a slot the site would refuse.
       const d = (P.store && P.store.data) || {};
-      ws.send(JSON.stringify({ type: "hello", mode: MODE, call_id: callId, car: (window.PageContext && window.PageContext.carId) || null,
+      ws.send(JSON.stringify({ type: "hello", mode: MODE, call_id: callId, returning, car: (window.PageContext && window.PageContext.carId) || null,
         bookings: (d.bookings || []).map((b) => ({ ref: b.ref, car_id: b.car_id, date: b.date, time: b.time, name: b.name, phone: b.phone })),
         reserved: (d.reservations || []).filter((r) => r.status !== "cancelled").map((r) => r.car_id) }));
     };
@@ -137,7 +147,7 @@
   function fail(msg) { note(msg); stop(); }
 
   function stop() {
-    if (!retried) callId = "";
+    if (!retried) { keepCall(callId); callId = ""; }
     phase = "idle";
     try { if (ws) { ws.onclose = null; ws.close(); } } catch {}
     closeMic();
@@ -185,15 +195,20 @@
     switch (m.type) {
       case "ready": rate = m.sample_rate; retried = false;   // a reconnect worked: a later drop may reconnect again
        
-        if (MODE === "tap") { closeMic(); phase = m.resumed ? "waiting" : "thinking"; draw(); }   // Wazir greets first (not on a reconnect); the mic opens when you tap
+        if (MODE === "tap" && m.listen) { phase = "listening"; draw(); }                       // you speak first: the mic is open (Wazir greets only if you say nothing)
+        else if (MODE === "tap") { closeMic(); phase = m.resumed ? "waiting" : "thinking"; draw(); }   // Wazir greets first (not on a reconnect); the mic opens when you tap
         else { phase = "listening"; draw(); }
         break;
-      case "mic":                                                    // tap mode: the server decided your turn is over - the microphone closes, Wazir works on the answer
-        if (!m.on && MODE === "tap" && phase === "listening") { closeMic(); phase = "thinking"; draw(); }
+      case "thinking":                                               // tap mode: your turn is over, Wazir works on the answer. The microphone stays OPEN until the reply starts (so a pause in the middle of a sentence is not lost)
+        if (MODE === "tap" && phase === "listening") { phase = "thinking"; draw(); }
+        break;
+      case "mic":                                                    // tap mode: the microphone closes now (the reply is starting, or the server waited long enough)
+        if (!m.on && MODE === "tap") { closeMic(); if (phase === "listening") { phase = "thinking"; draw(); } }
         break;
       case "stop":                                                   // the caller spoke over the agent: drop what is queued to play
         sources.forEach((x) => { try { x.stop(); } catch {} }); sources = []; nextAt = 0; break;
       case "busy": note("Voice is busy right now. You can keep chatting by typing."); stop(); break;
+      case "end": note("I ended the call after a quiet spell. Tap the microphone within 15 minutes to carry on where we left off."); stop(); break;
       case "clear": sources.forEach((s) => { try { s.stop(); } catch {} }); sources = []; nextAt = 0; break;     // the caller interrupted: drop what Wazir was about to say
       case "line":
         if (m.who === "you") {
