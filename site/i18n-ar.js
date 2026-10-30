@@ -145,7 +145,7 @@ window.AR_DICT = {
     [/^Thirsty at (.+)$/, (a) => `استهلاك مرتفع للوقود (${T(a)})`],
     [/^(\d+) years old, so ask about wear items like tyres and brakes$/, "عمرها $1 سنوات، لذا اسأل عن القطع المعرّضة للتآكل مثل الإطارات والمكابح"],
     [/^(Great price|Good price|Fair price|Above market): (.+) below our market estimate$/, (l, m) => `${T(l)}: أقل من تقديرنا للسوق بمقدار ${T(m)}`],
-    [/^Priced (.+) above our market estimate, so there may be room to negotiate$/, (m) => `سعرها أعلى من تقديرنا للسوق بمقدار ${T(m)}، لذا قد يكون هناك مجال للتفاوض`],
+    [/^Priced (.+) above our market estimate$/, (m) => `سعرها أعلى من تقديرنا للسوق بمقدار ${T(m)}`],
     [/^(\d+) \/ 150 passed$/, "اجتازت $1 / 150"],
     [/^(\d+) months \/ ([\d,]+) km$/, "$1 شهراً / $2 كم"],
     [/^(\d+) months$/, "$1 شهراً"],

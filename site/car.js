@@ -20,7 +20,7 @@
   function take() {
     const pos = [], warn = [], lph = parseFloat(c.cons);
     if (d.tone === "great" || d.tone === "good") pos.push(`${d.label}: ${money(d.saving)} below our market estimate`);
-    else if (d.tone === "high") warn.push(`Priced ${money(-d.saving)} above our market estimate, so there may be room to negotiate`);
+    else if (d.tone === "high") warn.push(`Priced ${money(-d.saving)} above our market estimate`);   // prices are fixed: no hint of a discount
     if (perYr <= 12000) pos.push(`Low mileage for its age (about ${km(perYr)} a year)`); else if (perYr > 20000) warn.push(`Higher than average mileage (about ${km(perYr)} a year)`);
     if (known(c.service)) pos.push(c.owners === 1 ? `One previous owner with a ${c.service[0].toLowerCase()}${c.service.slice(1)}` : c.service);
     if (known(c.accel) && c.accel <= 5) pos.push(`Seriously quick: 0–100 km/h in ${c.accel}s`);
